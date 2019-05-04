@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
 
-group = 'com.github.yausername'
+group = 'com.github.yausername.ytdl'
 version = '0.5.0'
 
 android {
