@@ -1,7 +1,7 @@
 # youtubedl-android
 Android library wrapper for [youtube-dl](https://github.com/rg3/youtube-dl) executable
 
-[![](https://jitpack.io/v/yausername/youtubedl-android.svg)](https://jitpack.io/#yausername/youtubedl-android)
+[![](https://jitpack.io/v/bawaviki/youtubedl-android.svg)](https://jitpack.io/#bawaviki/youtubedl-android)
 
 
 ## Credits
@@ -23,14 +23,14 @@ allprojects {
 Step 2: Add the dependency
 ```gradle
 dependencies {
-    implementation 'com.github.yausername.youtubedl-android:library:0.7.+'
+    implementation 'com.github.bawaviki.youtubedl-android:library:0.7.+'
 }
 ```
 Optional FFmpeg dependency can also be added
 ```gradle
 dependencies {
-    implementation 'com.github.yausername.youtubedl-android:library:0.7.+'
-    implementation 'com.github.yausername.youtubedl-android:ffmpeg:0.7.+'
+    implementation 'com.github.bawaviki.youtubedl-android:library:0.7.+'
+    implementation 'com.github.bawaviki.youtubedl-android:ffmpeg:0.7.+'
 }
 ```
 
@@ -43,7 +43,7 @@ dependencies {
 
 ```java
 try {
-    YoutubeDL.getInstance().init(getApplication());
+    YoutubeDL.getInstance().init(getApplication(),this);
 } catch (YoutubeDLException e) {
     Log.e(TAG, "failed to initialize youtubedl-android", e);
 }
@@ -75,13 +75,12 @@ YoutubeDL.getInstance().updateYoutubeDL(getApplication());
 ```
 
 ## FFmpeg
-If you wish to use ffmpeg features of youtube-dl (e.g. --extract-audio), include and initialize the ffmpeg library.
+If you wish to use ffmpeg features of youtube-dl (e.g. --extract-audio), include and initialize the ffmpeg library(you only need to Initialize FFmpeg library youtube-dl already initialize in this).
 ```java
 try {
-    YoutubeDL.getInstance().init(getApplication());
-    FFmpeg.getInstance().init(getApplication());
+    FFmpeg.getInstance().init(getApplication(),this);
 } catch (YoutubeDLException e) {
-    Log.e(TAG, "failed to initialize youtubedl-android", e);
+    Log.e(TAG, "failed to initialize ffmpeg", e);
 }
 ```
 
