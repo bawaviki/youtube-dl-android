@@ -51,11 +51,11 @@ public class App extends Application {
             }
         });
 
-        try {
-            YoutubeDL.getInstance().init(this);
-        } catch (YoutubeDLException e) {
-            Logger.e(e, "failed to initialize youtubedl-android");
-        }
+//        try {
+//            YoutubeDL.getInstance().init(this,App.this);
+//        } catch (YoutubeDLException e) {
+//            Logger.e(e, "failed to initialize youtubedl-android");
+//        }
     }
 
 }

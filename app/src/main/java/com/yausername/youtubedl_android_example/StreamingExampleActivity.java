@@ -1,8 +1,25 @@
 package com.yausername.youtubedl_android_example;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.DownloadManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -12,11 +29,19 @@ import android.widget.Toast;
 import com.devbrackets.android.exomedia.listener.OnPreparedListener;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.orhanobut.logger.Logger;
+import com.yausername.ffmpeg.FFmpeg;
+import com.yausername.youtubedl_android.DownloadProgressCallback;
 import com.yausername.youtubedl_android.YoutubeDL;
+import com.yausername.youtubedl_android.YoutubeDLException;
+import com.yausername.youtubedl_android.YoutubeDLRequest;
 import com.yausername.youtubedl_android.mapper.VideoFormat;
 import com.yausername.youtubedl_android.mapper.VideoInfo;
 
 import org.apache.commons.lang3.StringUtils;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -26,11 +51,17 @@ import io.reactivex.schedulers.Schedulers;
 
 public class StreamingExampleActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private Button btnStartStream;
+    private Button btnStartStream,btnmp3,btn144,btn240,btn360,btn720,btn1080,btnD;
     private EditText etUrl;
     private VideoView videoView;
     private TextView tvStreamStatus;
-
+    private List<String> fids;
+    private static String CHANNEL_ID="myid";
+    private boolean downloading = false;
+    private String title="savetube",author="bawaviki";
+    ProgressDialog progressDialog;
+    NotificationCompat.Builder notifi;
+    NotificationManager notificationManager;
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     @Override
@@ -38,19 +69,51 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_streaming_example);
 
+        try {
+            //YoutubeDL.getInstance().init(getApplication(),StreamingExampleActivity.this);
+            FFmpeg.getInstance().init(getApplication(),StreamingExampleActivity.this);
+        } catch (YoutubeDLException e) {
+            Log.e("ffmpeg", "failed to initialize youtubedl-android", e);
+        }
+        createNotfiChannel();
         initViews();
         initListeners();
+
     }
 
     private void initViews() {
         btnStartStream = findViewById(R.id.btn_start_streaming);
+        btnmp3=findViewById(R.id.mp3button);
+        btn144=findViewById(R.id.button144);
+        btn240=findViewById(R.id.button240);
+        btn360=findViewById(R.id.button360);
+        btn720=findViewById(R.id.button720);
+        btn1080=findViewById(R.id.button1080);
+        btnD=findViewById(R.id.buttond);
         etUrl = findViewById(R.id.et_url);
         videoView = findViewById(R.id.video_view);
         tvStreamStatus = findViewById(R.id.tv_status);
+        progressDialog=new ProgressDialog(StreamingExampleActivity.this);
+        progressDialog.setMessage("Loading.....");
+        progressDialog.setCancelable(false);
+        fids=new ArrayList<>();
+        notifi=new NotificationCompat.Builder(StreamingExampleActivity.this,CHANNEL_ID)
+                .setContentText("Downloading")
+                .setSmallIcon(R.drawable.exomedia_ic_play_arrow_white)
+                .setContentTitle("Download file")
+                .setOngoing(true);
+        notificationManager=(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);;
     }
 
     private void initListeners() {
         btnStartStream.setOnClickListener(this);
+        btnmp3.setOnClickListener(this);
+        btn144.setOnClickListener(this);
+        btn240.setOnClickListener(this);
+        btn360.setOnClickListener(this);
+        btn720.setOnClickListener(this);
+        btn1080.setOnClickListener(this);
+        btnD.setOnClickListener(this);
         videoView.setOnPreparedListener(new OnPreparedListener() {
             @Override
             public void onPrepared() {
@@ -64,6 +127,38 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
         switch (v.getId()) {
             case R.id.btn_start_streaming: {
                 startStream();
+                break;
+            }
+            case R.id.mp3button:{
+                startDownload("--audio-format", "mp3");
+                break;
+            }
+            case R.id.button144:{
+                startDownload("-f", "160+140");
+                break;
+            }
+            case R.id.button240:{
+                startDownload("-f", "135+140");
+                break;
+            }
+            case R.id.button360:{
+                startDownload("-f", "18");
+                break;
+            }
+            case R.id.button720:{
+                startDownload("-f", "136+140");
+                break;
+            }
+            case R.id.button1080:{
+                startDownload("-f", "137+140");
+                break;
+            }
+            case R.id.buttond:{
+                if( etUrl.getText().toString().contains("https://youtube.com")|| etUrl.getText().toString().contains("https://youtu.be")) {
+                    getVideoFIds();
+                }else {
+                    downloadVideo();
+                }
                 break;
             }
         }
@@ -103,6 +198,26 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
         compositeDisposable.add(disposable);
     }
 
+    private void downloadVideo() {
+        String url = etUrl.getText().toString();
+        if (StringUtils.isBlank(url)) {
+            etUrl.setError(getString(R.string.url_error));
+            return;
+        }
+
+        Disposable disposable = Observable.fromCallable(() -> YoutubeDL.getInstance().getInfo(url))
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(streamInfo -> {
+                    downloadManager(getVideoUrl(streamInfo));
+
+                }, e -> {
+                    Toast.makeText(StreamingExampleActivity.this, "Downloading failed. failed to get stream info", Toast.LENGTH_LONG).show();
+                    Logger.e(e, "failed to get stream info");
+                });
+        compositeDisposable.add(disposable);
+    }
+
     private void setupVideoView(String videoUrl) {
         videoView.setVideoURI(Uri.parse(videoUrl));
     }
@@ -113,12 +228,185 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
             Toast.makeText(StreamingExampleActivity.this, "failed to get stream url", Toast.LENGTH_LONG).show();
             return null;
         }
+        title=streamInfo.title+"."+streamInfo.ext;
+        author=streamInfo.uploader;
         for(VideoFormat f: streamInfo.formats){
-            if("mp4".equals(f.ext)){
-                videoUrl = f.url;
-                break;
+            if( etUrl.getText().toString().contains("https://youtube.com")|| etUrl.getText().toString().contains("https://youtu.be")) {
+                Log.e("url", ":" + f.formatId);
+                if ("18".equals(f.formatId)) {
+                    videoUrl = f.url;
+                    break;
+                }
+            }else{
+                if ("mp4".equals(f.ext) || "mkv".equals(f.ext)) {
+                    videoUrl = f.url;
+                    Log.e("url",":"+videoUrl);
+                    break;
+                }
             }
         }
         return videoUrl;
+    }
+
+    private DownloadProgressCallback callback = new DownloadProgressCallback() {
+        @Override
+        public void onProgressUpdate(float progress, long etaInSeconds) {
+
+                notificationManager.notify(0,notifi.build());
+
+            notifi.setProgress(100, (int) progress,false);
+            runOnUiThread(() -> {
+                Toast.makeText(StreamingExampleActivity.this, String.valueOf(progress) + "% (ETA " + String.valueOf(etaInSeconds) + " seconds)", Toast.LENGTH_SHORT).show();
+                }
+                );
+
+        }
+    };
+
+    private void startDownload(String op,String vl) {
+        if (downloading) {
+            Toast.makeText(StreamingExampleActivity.this, "cannot start download. a download is already in progress", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (!isStoragePermissionGranted()) {
+            Toast.makeText(StreamingExampleActivity.this, "grant storage permission and retry", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        String url = etUrl.getText().toString();
+        if (StringUtils.isBlank(url)) {
+            etUrl.setError(getString(R.string.url_error));
+            return;
+        }
+        Log.e("vurl",":"+url);
+        YoutubeDLRequest request = new YoutubeDLRequest(url);
+        File youtubeDLDir = getDownloadLocation();
+        request.setOption("-o", youtubeDLDir.getAbsolutePath() + "/%(title)s.%(ext)s");
+        if(vl.equals("mp3"))
+            request.setOption("-x");
+        request.setOption(op,vl);
+
+
+        downloading = true;
+        Disposable disposable = Observable.fromCallable(() -> YoutubeDL.getInstance().execute(request, callback))
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(youtubeDLResponse -> {
+                    Toast.makeText(StreamingExampleActivity.this, "download successful", Toast.LENGTH_LONG).show();
+                    downloading = false;
+                    notifi.setProgress(0,0,false);
+                    notifi.setOngoing(false);
+                    notificationManager.notify(0,notifi.build());
+                }, e -> {
+                    Toast.makeText(StreamingExampleActivity.this, "download failed", Toast.LENGTH_LONG).show();
+                    Logger.e(e, "failed to download");
+                    downloading = false;
+                });
+        compositeDisposable.add(disposable);
+
+    }
+
+    @NonNull
+    private File getDownloadLocation() {
+        File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        File youtubeDLDir = new File(downloadsDir, "youtubedl-android");
+        if (!youtubeDLDir.exists()) youtubeDLDir.mkdir();
+        return youtubeDLDir;
+    }
+
+
+    private void getVideoFIds(){
+       new Fids().execute();
+    }
+
+    public boolean isStoragePermissionGranted() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED) {
+                return true;
+            } else {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+                return false;
+            }
+        } else {
+            return true;
+        }
+    }
+
+    private void createNotfiChannel(){
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            NotificationChannel channel=new NotificationChannel(CHANNEL_ID,"my_chanell", NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("download notifi");
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    private void downloadManager(String url){
+        DownloadManager.Request req=new DownloadManager.Request(Uri.parse(url));
+        req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
+        req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+        req.setDestinationInExternalPublicDir("/Download/",title);
+        DownloadManager dm=(DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+        if (dm != null) {
+            dm.enqueue(req);
+        }
+    }
+
+    public  class Fids extends AsyncTask{
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progressDialog.show();
+        }
+
+        @SuppressLint("WrongThread")
+        @Override
+        protected Object doInBackground(Object[] objects) {
+            try {
+               for(VideoFormat f: YoutubeDL.getInstance().getInfo(etUrl.getText().toString()).formats){
+                   fids.add(f.formatId);
+               }
+            } catch (YoutubeDLException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return fids;
+        }
+
+        @Override
+        protected void onPostExecute(Object o) {
+            super.onPostExecute(o);
+            if(fids.contains("140")){
+                btnmp3.setVisibility(View.VISIBLE);
+            }else
+                btnmp3.setVisibility(View.INVISIBLE);
+            if(fids.contains("160")){
+                btn144.setVisibility(View.VISIBLE);
+            }else
+                btn144.setVisibility(View.INVISIBLE);
+            if(fids.contains("135")){
+                btn240.setVisibility(View.VISIBLE);
+            }else
+                btn240.setVisibility(View.INVISIBLE);
+            if(fids.contains("18")){
+                btn360.setVisibility(View.VISIBLE);
+            }else
+                btn360.setVisibility(View.INVISIBLE);
+            if(fids.contains("136")) {
+                btn720.setVisibility(View.VISIBLE);
+            }else
+                btn720.setVisibility(View.INVISIBLE);
+            if(fids.contains("137")){
+                btn1080.setVisibility(View.VISIBLE);
+            }else
+                btn1080.setVisibility(View.INVISIBLE);
+            progressDialog.dismiss();
+        }
     }
 }

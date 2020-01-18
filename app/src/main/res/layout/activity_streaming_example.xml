@@ -11,7 +11,9 @@
         android:layout_width="match_parent"
         android:layout_height="220dp"
         android:paddingTop="10dp"
-        app:useDefaultControls="true"/>
+        app:useDefaultControls="true"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="0dp" />
 
     <TextView
         android:id="@+id/tv_status"
@@ -29,23 +31,116 @@
         android:id="@+id/btn_start_streaming"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="150dp"
+        android:layout_marginBottom="164dp"
+        android:layout_marginLeft="44dp"
+        android:layout_marginStart="44dp"
         android:text="@string/btn_start_stream"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
     <EditText
         android:id="@+id/et_url"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:padding="10dp"
+        android:layout_width="382dp"
+        android:layout_height="41dp"
         android:layout_marginBottom="20dp"
         android:ems="10"
         android:hint="@string/url_hint"
         android:inputType="textUri"
+        android:padding="10dp"
         app:layout_constraintBottom_toTopOf="@+id/btn_start_streaming"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/mp3button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginStart="20dp"
+        android:text="mp3"
+        android:visibility="invisible"
+        app:layout_constraintBaseline_toBaselineOf="@+id/button144"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/button144"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="44dp"
+        android:layout_marginStart="44dp"
+        android:layout_marginTop="8dp"
+        android:text="144p"
+        android:visibility="invisible"
+        app:layout_constraintStart_toEndOf="@+id/mp3button"
+        app:layout_constraintTop_toBottomOf="@+id/btn_start_streaming" />
+
+    <Button
+        android:id="@+id/button240"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
+        android:text="240p"
+        android:visibility="invisible"
+        app:layout_constraintBaseline_toBaselineOf="@+id/button144"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.8"
+        app:layout_constraintStart_toEndOf="@+id/button144" />
+
+    <Button
+        android:id="@+id/button360"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginStart="16dp"
+        android:text="360p"
+        android:visibility="invisible"
+        app:layout_constraintBaseline_toBaselineOf="@+id/button720"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/button720"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="44dp"
+        android:layout_marginStart="44dp"
+        android:text="720p"
+        android:visibility="invisible"
+        app:layout_constraintBaseline_toBaselineOf="@+id/button1080"
+        app:layout_constraintStart_toEndOf="@+id/button360" />
+
+    <Button
+        android:id="@+id/button1080"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="1080p"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.818"
+        app:layout_constraintStart_toEndOf="@+id/button720"
+        app:layout_constraintTop_toBottomOf="@+id/button240"
+        app:layout_constraintVertical_bias="0.733" />
+
+    <Button
+        android:id="@+id/buttond"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
+        android:text="@string/btn_start_download"
+        app:layout_constraintBaseline_toBaselineOf="@+id/btn_start_streaming"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/btn_start_streaming" />
 
 </android.support.constraint.ConstraintLayout>

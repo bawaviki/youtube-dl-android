@@ -1,12 +1,17 @@
 package com.yausername.youtubedl_android_example;
 
 import android.Manifest;
+import android.app.DownloadManager;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -37,13 +42,20 @@ public class DownloadingExampleActivity extends AppCompatActivity implements Vie
     private EditText etUrl;
     private ProgressBar progressBar;
     private TextView tvDownloadStatus;
+    NotificationCompat.Builder notifi;
+    NotificationManager notificationManager;
+    private static String CHANNEL_ID="myid";
 
     private boolean downloading = false;
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     private DownloadProgressCallback callback = new DownloadProgressCallback() {
+
         @Override
         public void onProgressUpdate(float progress, long etaInSeconds) {
+            notificationManager.notify(0,notifi.build());
+
+            notifi.setProgress(100, (int) progress,false);
             runOnUiThread(() -> {
                         progressBar.setProgress((int) progress);
                         tvDownloadStatus.setText(String.valueOf(progress) + "% (ETA " + String.valueOf(etaInSeconds) + " seconds)");
@@ -59,6 +71,7 @@ public class DownloadingExampleActivity extends AppCompatActivity implements Vie
 
         initViews();
         initListeners();
+        createNotfiChannel();
     }
 
     private void initViews() {
@@ -66,6 +79,13 @@ public class DownloadingExampleActivity extends AppCompatActivity implements Vie
         etUrl = findViewById(R.id.et_url);
         progressBar = findViewById(R.id.progress_bar);
         tvDownloadStatus = findViewById(R.id.tv_status);
+        notifi=new NotificationCompat.Builder(DownloadingExampleActivity.this,CHANNEL_ID)
+                .setContentText("Downloading")
+                .setSmallIcon(R.drawable.exomedia_ic_play_arrow_white)
+                .setContentTitle("Download file")
+                .setOngoing(true);
+        notificationManager=(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
     }
 
     private void initListeners() {
@@ -114,11 +134,17 @@ public class DownloadingExampleActivity extends AppCompatActivity implements Vie
                     tvDownloadStatus.setText(getString(R.string.download_complete));
                     Toast.makeText(DownloadingExampleActivity.this, "download successful", Toast.LENGTH_LONG).show();
                     downloading = false;
+                    notifi.setProgress(0,0,false);
+                    notifi.setOngoing(false);
+                    notificationManager.notify(0,notifi.build());
                 }, e -> {
                     tvDownloadStatus.setText(getString(R.string.download_failed));
                     Toast.makeText(DownloadingExampleActivity.this, "download failed", Toast.LENGTH_LONG).show();
                     Logger.e(e, "failed to download");
                     downloading = false;
+                    notifi.setProgress(0,0,false);
+                    notifi.setOngoing(false);
+                    notificationManager.notify(0,notifi.build());
                 });
         compositeDisposable.add(disposable);
 
@@ -156,4 +182,16 @@ public class DownloadingExampleActivity extends AppCompatActivity implements Vie
             return true;
         }
     }
+
+    private void createNotfiChannel(){
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            NotificationChannel channel=new NotificationChannel(CHANNEL_ID,"my_chanell", NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("download notifi");
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
 }

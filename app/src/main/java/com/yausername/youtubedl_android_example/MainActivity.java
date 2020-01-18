@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -36,6 +37,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+//        try {
+//            YoutubeDL.getInstance().init(getApplication(),MainActivity.this);
+//            //FFmpeg.getInstance().init(getApplication(),StreamingExampleActivity.this);
+//        } catch (YoutubeDLException e) {
+//            Log.e("youtube-dl", "failed to initialize youtubedl-android", e);
+//        }
 
         initViews();
         initListeners();
