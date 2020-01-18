@@ -1,6 +1,13 @@
 package com.yausername.youtubedl_android;
 
+import android.app.AlertDialog;
 import android.app.Application;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,8 +19,13 @@ import com.yausername.youtubedl_android.utils.StreamProcessExtractor;
 import com.yausername.youtubedl_android.utils.YoutubeDLUtils;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,8 +41,17 @@ public class YoutubeDL {
     private static final String youtubeDLBin = "__main__.py";
     protected static final String youtubeDLFile = "youtube_dl.zip";
 
+    private AlertDialog.Builder alert;
+    private static ProgressDialog progressDialog;
+
+    private static Application app;
+    private static File packagesDir;
+    private static final String sharedPrefsName = "python-Check";
+    private static final String isPython = "python-available";
+    private static final String releasesUrl = "https://github.com/bawaviki/arm_packages/raw/master/python3_7_arm.zip";
+
     private boolean initialized = false;
-    private File pythonPath;
+    private static File pythonPath;
     private File youtubeDLPath;
     private File binDir;
     private String ENV_LD_LIBRARY_PATH;
@@ -45,7 +66,7 @@ public class YoutubeDL {
         return INSTANCE;
     }
 
-    synchronized public void init(Application application) throws YoutubeDLException {
+    synchronized public void init(Application application,Context context) throws YoutubeDLException {
         if (initialized) return;
 
         initLogger();
@@ -53,7 +74,7 @@ public class YoutubeDL {
         File baseDir = new File(application.getFilesDir(), baseName);
         if(!baseDir.exists()) baseDir.mkdir();
 
-        File packagesDir = new File(baseDir, packagesRoot);
+        packagesDir = new File(baseDir, packagesRoot);
         binDir = new File(packagesDir, "usr/bin");
         pythonPath = new File(packagesDir, pythonBin);
 
@@ -63,7 +84,8 @@ public class YoutubeDL {
         ENV_LD_LIBRARY_PATH = packagesDir.getAbsolutePath() + "/usr/lib";
         ENV_SSL_CERT_FILE = packagesDir.getAbsolutePath() + "/usr/etc/tls/cert.pem";
 
-        initPython(application, packagesDir);
+        app=application;
+        initPython(application, packagesDir,context);
         initYoutubeDL(application, youtubeDLDir);
 
         initialized = true;
@@ -81,21 +103,18 @@ public class YoutubeDL {
         }
     }
 
-    protected void initPython(Application application, File packagesDir) throws YoutubeDLException {
-        if (!pythonPath.exists()) {
-            if (!packagesDir.exists()) {
-                packagesDir.mkdirs();
-            }
-            try {
-                YoutubeDLUtils.unzip(application.getResources().openRawResource(R.raw.python3_7_arm), packagesDir);
-            } catch (IOException e) {
-                // delete for recovery later
-                YoutubeDLUtils.delete(pythonPath);
-                throw new YoutubeDLException("failed to initialize", e);
-            }
-            pythonPath.setExecutable(true);
+    protected void initPython(Application application, File packagesDir,Context context) throws YoutubeDLException {
+
+        initAlertBox(context,application);
+
+        if(!pythonIsAvailable(application)){
+            alert.show();
         }
-    }
+
+
+
+        }
+
 
     private void initLogger() {
         Logger.addLogAdapter(new AndroidLogAdapter() {
@@ -191,6 +210,128 @@ public class YoutubeDL {
             return YoutubeDLUpdater.update(application);
         } catch (IOException e) {
             throw new YoutubeDLException("failed to update youtube-dl", e);
+        }
+    }
+
+    private Boolean pythonIsAvailable(Application application){
+        SharedPreferences pref = application.getSharedPreferences(sharedPrefsName, Context.MODE_PRIVATE);
+        String oldVersion = pref.getString(isPython, null);
+        if("true".equals(oldVersion) && pythonPath.exists() ){
+            return true;
+        }else
+            return false;
+    }
+
+    private void initAlertBox(Context context, final Application application){
+        alert=new AlertDialog.Builder(context);
+        alert.setTitle("Download Python");
+        alert.setMessage("Python is needed by application.");
+        alert.setCancelable(false);
+        initProcessDialog(context);
+        alert.setPositiveButton("Download now", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                new InstallPython().execute(application);
+            }
+        });
+    }
+
+    private void initProcessDialog(Context context){
+        progressDialog=new ProgressDialog(context);
+        progressDialog.setCancelable(false);
+        progressDialog.setTitle("Downloading");
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+    }
+
+    @NonNull
+    private static File download(Application application, String url) throws YoutubeDLException, IOException {
+        File file = null;
+        InputStream in = null;
+        FileOutputStream out = null;
+        ReadableByteChannel inChannel = null;
+        FileChannel outChannel = null;
+        progressDialog.setProgress(10);
+        try {
+            URL downloadUrl = new URL(url);
+            in = downloadUrl.openStream();
+            inChannel = Channels.newChannel(in);
+            file = File.createTempFile("ffmpeg_arm", "zip", application.getCacheDir());
+            out = new FileOutputStream(file);
+            outChannel = out.getChannel();
+            long bytesRead=0;
+            long transferPosition=0;
+            while ((bytesRead=outChannel.transferFrom(inChannel,transferPosition,1 << 24)) > 0) {
+                transferPosition+=bytesRead;
+            }
+            progressDialog.setProgress(50);
+        } catch (Exception e) {
+            // delete temp file if something went wrong
+            if (null != file && file.exists()) {
+                file.delete();
+            }
+            throw e;
+        } finally {
+            if (null != in) in.close();
+            if (null != inChannel) inChannel.close();
+            if (null != out) out.close();
+            if (null != outChannel) outChannel.close();
+        }
+        progressDialog.setProgress(70);
+        return file;
+    }
+
+    private static void updateSharedPrefs(Application application, String tag) throws YoutubeDLException {
+        progressDialog.setProgress(90);
+        SharedPreferences pref = application.getSharedPreferences(sharedPrefsName, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = pref.edit();
+        editor.putString(isPython, tag);
+        editor.apply();
+        progressDialog.setProgress(100);
+    }
+
+
+    static class  InstallPython extends AsyncTask <Application,Integer,Boolean> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progressDialog.show();
+        }
+
+        @Override
+        protected Boolean doInBackground(Application... applications) {
+            if (!pythonPath.exists()) {
+                if (!packagesDir.exists()) {
+                    packagesDir.mkdirs();
+                }
+                progressDialog.setProgress(2);
+                try {
+                    YoutubeDLUtils.unzip(download(applications[0],releasesUrl), packagesDir);
+                } catch (IOException e) {
+                    // delete for recovery later
+                    YoutubeDLUtils.delete(pythonPath);
+                    try {
+                        throw new YoutubeDLException("failed to initialize", e);
+                    } catch (YoutubeDLException ex) {
+                        ex.printStackTrace();
+                    }
+                } catch (YoutubeDLException e) {
+                    e.printStackTrace();
+                }
+                pythonPath.setExecutable(true);
+            }
+            return true;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean aBoolean) {
+            super.onPostExecute(aBoolean);
+            try {
+                updateSharedPrefs(app,aBoolean.toString());
+            } catch (YoutubeDLException e) {
+                e.printStackTrace();
+            }
+            progressDialog.dismiss();
         }
     }
 }
