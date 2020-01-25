@@ -20,7 +20,7 @@ import java.nio.channels.ReadableByteChannel;
 
 public class YoutubeDLUpdater {
 
-    private static final String releasesUrl = "https://api.github.com/repos/yausername/youtubedl-lazy/releases/latest";
+    private static final String releasesUrl = "https://api.github.com/repos/bawaviki/youtubedl-lazy/releases/latest";
     private static final String sharedPrefsName = "youtubedl-android";
     private static final String youtubeDLVersionKey = "youtubeDLVersion";
 
