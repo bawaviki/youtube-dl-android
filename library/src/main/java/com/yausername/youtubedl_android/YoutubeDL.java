@@ -98,12 +98,12 @@ public class YoutubeDL {
     protected void initYoutubeDL(Application application, File youtubeDLDir) throws YoutubeDLException {
         if (!youtubeDLDir.exists()) {
             youtubeDLDir.mkdirs();
-            try {
-                YoutubeDLUtils.unzip(application.getResources().openRawResource(R.raw.youtube_dl), youtubeDLDir);
-            } catch (IOException e) {
-                YoutubeDLUtils.delete(youtubeDLDir);
-                throw new YoutubeDLException("failed to initialize", e);
-            }
+//            try {
+//                YoutubeDLUtils.unzip(application.getResources().openRawResource(R.raw.youtube_dl), youtubeDLDir);
+//            } catch (IOException e) {
+//                YoutubeDLUtils.delete(youtubeDLDir);
+//                throw new YoutubeDLException("failed to initialize", e);
+//            }
         }
     }
 
