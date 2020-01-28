@@ -247,7 +247,7 @@ public class YoutubeDL {
     private static File download(Application application, String urls) throws YoutubeDLException, IOException {
          int count;
         try {
-            URL url = new URL(urlS);
+            URL url = new URL(urls);
             URLConnection conection = url.openConnection();
             conection.connect();
 
