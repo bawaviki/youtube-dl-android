@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.orhanobut.logger.AndroidLogAdapter;
 import com.orhanobut.logger.Logger;
@@ -16,11 +17,14 @@ import com.yausername.youtubedl_android.YoutubeDL;
 import com.yausername.youtubedl_android.YoutubeDLException;
 import com.yausername.youtubedl_android.utils.YoutubeDLUtils;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
@@ -138,49 +142,59 @@ public class FFmpeg {
     }
 
     @NonNull
-    private static File download(Application application, String url) throws YoutubeDLException, IOException {
-        File file = null;
-        InputStream in = null;
-        FileOutputStream out = null;
-        ReadableByteChannel inChannel = null;
-        FileChannel outChannel = null;
-        progressDialog.setProgress(10);
+    private static File download(Application application, String urls) throws YoutubeDLException, IOException {
+         int count;
         try {
-            URL downloadUrl = new URL(url);
-            in = downloadUrl.openStream();
-            inChannel = Channels.newChannel(in);
-            file = File.createTempFile("ffmpeg_arm", "zip", application.getCacheDir());
-            out = new FileOutputStream(file);
-            outChannel = out.getChannel();
-            long bytesRead=0;
-            long transferPosition=0;
-            while ((bytesRead=outChannel.transferFrom(inChannel,transferPosition,1 << 24)) > 0) {
-                transferPosition+=bytesRead;
+            URL url = new URL(urls);
+            URLConnection conection = url.openConnection();
+            conection.connect();
+
+            // this will be useful so that you can show a tipical 0-100%
+            // progress bar
+            int lenghtOfFile = conection.getContentLength();
+
+            // download the file
+            InputStream input = new BufferedInputStream(url.openStream(),
+                    8192);
+
+            // Output stream
+            OutputStream output = new FileOutputStream(application.getCacheDir().toString()
+                    + "/ffmpeg_arm.zip");
+
+            byte data[] = new byte[1024];
+
+            long total = 0;
+
+            while ((count = input.read(data)) != -1) {
+                total += count;
+                // publishing the progress....
+                // After this onProgressUpdate will be called
+                progressDialog.setProgress((int) ((total * 100) / lenghtOfFile));
+
+                // writing data to file
+                output.write(data, 0, count);
             }
-            progressDialog.setProgress(50);
+
+            // flushing output
+            output.flush();
+
+            // closing streams
+            output.close();
+            input.close();
+
         } catch (Exception e) {
-            // delete temp file if something went wrong
-            if (null != file && file.exists()) {
-                file.delete();
-            }
-            throw e;
-        } finally {
-            if (null != in) in.close();
-            if (null != inChannel) inChannel.close();
-            if (null != out) out.close();
-            if (null != outChannel) outChannel.close();
+
+            Log.e("Error: ", e.getMessage());
         }
-        progressDialog.setProgress(70);
-        return file;
+
+        return new File(application.getCacheDir()+"/ffmpeg_arm.zip");
     }
 
     private static void updateSharedPrefs(Application application, String tag) throws YoutubeDLException {
-        progressDialog.setProgress(90);
         SharedPreferences pref = application.getSharedPreferences(sharedPrefsName, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = pref.edit();
         editor.putString(isFfmpeg, tag);
         editor.apply();
-        progressDialog.setProgress(100);
     }
 
    static class  InstallFfmpeg extends AsyncTask<Application,Integer,Boolean>{
@@ -197,10 +211,9 @@ public class FFmpeg {
                 if (!packagesDir.exists()) {
                     packagesDir.mkdirs();
                 }
-                progressDialog.setProgress(2);
+                progressDialog.setProgress(0);
                 try {
                     YoutubeDLUtils.unzip(download(applications[0],releasesUrl), packagesDir);
-                    progressDialog.setProgress(80);
                 } catch (IOException e) {
                     // delete for recovery later
                     YoutubeDLUtils.delete(ffmpegPath);
