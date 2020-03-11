@@ -1,11 +1,14 @@
 # youtubedl-android
-Android library wrapper for [youtube-dl](https://github.com/rg3/youtube-dl) executable
+Android library wrapper for [youtube-dl](https://github.com/rg3/youtube-dl) executable.
+Based on [yausername's youtubedl-android](https://github.com/yausername/youtubedl-android) but with ability to download binary files at 
+runtime to decrease apk size.
 
 [![](https://jitpack.io/v/bawaviki/youtube-dl-android.svg)](https://jitpack.io/#bawaviki/youtube-dl-android)
 
 
 ## Credits
 *  [youtubedl-java](https://github.com/sapher/youtubedl-java) by [sapher](https://github.com/sapher), youtubedl-android adds android compatibility to youtubedl-java.
+*  [youtubedl-android](https://github.com/yausername/youtubedl-android) by [yausername](https://github.com/yausername), youtube-dl-android adds ondemand library files download compatibility to youtubedl-android.
 
 <br/>
 
@@ -94,5 +97,5 @@ try {
 <br/>
 
 ## Docs
- *  Though not required for just using this library, documentation on building python for android can be seen [here](BUILD_PYTHON.md). Same for ffmpeg [here](BUILD_PYTHON.md).
+ *  Though not required for just using this library, documentation on building python for android can be seen [here](BUILD_PYTHON.md). Same for ffmpeg [here](BUILD_FFMPEG.md).
  * youtubedl-android uses lazy extractors based build of youtube-dl ([youtubedl-lazy](https://github.com/yausername/youtubedl-lazy/))
