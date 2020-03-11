@@ -315,7 +315,6 @@ public class YoutubeDL {
                 if (!packagesDir.exists()) {
                     packagesDir.mkdirs();
                 }
-                progressDialog.setProgress(2);
                 try {
                     YoutubeDLUtils.unzip(download(applications[0],releasesUrl), packagesDir);
                 } catch (IOException e) {
