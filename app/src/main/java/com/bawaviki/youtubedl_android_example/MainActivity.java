@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //            Log.e("youtube-dl", "failed to initialize youtubedl-android", e);
 //        }
 
+        updateYoutubeDL();
         initViews();
         initListeners();
     }
