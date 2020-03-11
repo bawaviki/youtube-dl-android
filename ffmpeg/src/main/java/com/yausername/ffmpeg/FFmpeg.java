@@ -123,7 +123,7 @@ public class FFmpeg {
     private void initAlertBox(Context context, final Application application){
         alert=new AlertDialog.Builder(context);
         alert.setTitle("Download Ffmpeg");
-        alert.setMessage("FFmpeg is needed by application.");
+        alert.setMessage("FFmpeg binary is needed by this application.");
         alert.setCancelable(false);
         initProcessDialog(context);
         alert.setPositiveButton("Download now", new DialogInterface.OnClickListener() {
