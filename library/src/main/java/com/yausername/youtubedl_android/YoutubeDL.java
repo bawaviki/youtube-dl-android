@@ -229,7 +229,7 @@ public class YoutubeDL {
     private void initAlertBox(Context context, final Application application){
         alert=new AlertDialog.Builder(context);
         alert.setTitle("Download Python");
-        alert.setMessage("Python is needed by application.");
+        alert.setMessage("Python binary is needed by this application.");
         alert.setCancelable(false);
         initProcessDialog(context);
         alert.setPositiveButton("Download now", new DialogInterface.OnClickListener() {
