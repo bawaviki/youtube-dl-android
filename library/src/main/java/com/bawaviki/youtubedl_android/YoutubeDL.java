@@ -42,7 +42,7 @@ public class YoutubeDL {
     private static final String youtubeDLBin = "__main__.py";
     protected static final String youtubeDLFile = "youtube_dl.zip";
 
-    private AlertDialog.Builder alert;
+   // private AlertDialog.Builder alert;
     private static ProgressDialog progressDialog;
 
     private static Application app;
@@ -106,10 +106,10 @@ public class YoutubeDL {
 
     protected void initPython(Application application, File packagesDir,Context context) throws YoutubeDLException {
 
-        initAlertBox(context,application);
+        initProcessDialog(context);
 
         if(!pythonIsAvailable(application)){
-            alert.show();
+            new InstallPython().execute(application);
         }
 
 
@@ -223,24 +223,24 @@ public class YoutubeDL {
             return false;
     }
 
-    private void initAlertBox(Context context, final Application application){
-        alert=new AlertDialog.Builder(context);
-        alert.setTitle("Download Python");
-        alert.setMessage("Python binary is needed by this application.");
-        alert.setCancelable(false);
-        initProcessDialog(context);
-        alert.setPositiveButton("Download now", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                new InstallPython().execute(application);
-            }
-        });
-    }
+//    private void initAlertBox(Context context, final Application application){
+//        alert=new AlertDialog.Builder(context);
+//        alert.setTitle("Download Python");
+//        alert.setMessage("Python binary is needed by this application.");
+//        alert.setCancelable(false);
+//        initProcessDialog(context);
+//        alert.setPositiveButton("Download now", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialogInterface, int i) {
+//                new InstallPython().execute(application);
+//            }
+//        });
+//    }
 
     private void initProcessDialog(Context context){
         progressDialog=new ProgressDialog(context);
         progressDialog.setCancelable(false);
-        progressDialog.setTitle("Downloading");
+        progressDialog.setTitle("Downloading Component (2)");
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
     }
 

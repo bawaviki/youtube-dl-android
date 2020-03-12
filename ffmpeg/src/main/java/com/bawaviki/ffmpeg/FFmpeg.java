@@ -37,7 +37,7 @@ public class FFmpeg {
     private static final String sharedPrefsName = "ffmpeg-Check";
     private static final String isFfmpeg = "ffmpeg-available";
 
-    private AlertDialog.Builder alert;
+    //private AlertDialog.Builder alert;
     private static ProgressDialog progressDialog;
     private static File packagesDir;
 
@@ -76,9 +76,9 @@ public class FFmpeg {
     private void initFFmpeg(Application application, File packagesDir,Context context){
 
 
-        initAlertBox(context,application);
+        initProcessDialog(context);
         if(!ffmpegIsAvailable(application)){
-            alert.show();
+            new InstallFfmpeg().execute(application);
         }else {
             try {
                 YoutubeDL.getInstance().init(app,cont);
@@ -117,24 +117,24 @@ public class FFmpeg {
         return false;
     }
 
-    private void initAlertBox(Context context, final Application application){
-        alert=new AlertDialog.Builder(context);
-        alert.setTitle("Download Ffmpeg");
-        alert.setMessage("FFmpeg binary is needed by this application.");
-        alert.setCancelable(false);
-        initProcessDialog(context);
-        alert.setPositiveButton("Download now", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                    new InstallFfmpeg().execute(application);
-            }
-        });
-    }
+//    private void initAlertBox(Context context, final Application application){
+//        alert=new AlertDialog.Builder(context);
+//        alert.setTitle("Download Ffmpeg");
+//        alert.setMessage("FFmpeg binary is needed by this application.");
+//        alert.setCancelable(false);
+//        initProcessDialog(context);
+//        alert.setPositiveButton("Download now", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialogInterface, int i) {
+//                    new InstallFfmpeg().execute(application);
+//            }
+//        });
+//    }
 
     private void initProcessDialog(Context context){
         progressDialog=new ProgressDialog(context);
         progressDialog.setCancelable(false);
-        progressDialog.setTitle("Downloading");
+        progressDialog.setTitle("Downloading Component (1)");
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
     }
 
