@@ -1,21 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".StreamingExampleActivity">
 
-    <com.devbrackets.android.exomedia.ui.widget.VideoView
-        android:id="@+id/video_view"
+    <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="220dp"
-        android:paddingTop="10dp"
-        app:useDefaultControls="true"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="0dp" />
+        android:layout_height="match_parent">
 
-    <TextView
+        <com.devbrackets.android.exomedia.ui.widget.VideoView
+            android:id="@+id/video_view"
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:paddingTop="10dp"
+            app:layout_constraintBottom_toTopOf="@+id/et_url"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0"
+            app:useDefaultControls="true"
+            tools:layout_editor_absoluteX="0dp" />
+
+        <TextView
         android:id="@+id/tv_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -144,3 +151,6 @@
         app:layout_constraintStart_toEndOf="@+id/btn_start_streaming" />
 
 </android.support.constraint.ConstraintLayout>
+    <include layout="@layout/bottomsheet_playlist"/>
+
+</android.support.design.widget.CoordinatorLayout>

@@ -11,6 +11,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.bawaviki.youtubedl_android.mapper.PlaylistInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orhanobut.logger.AndroidLogAdapter;
 import com.orhanobut.logger.Logger;
@@ -144,6 +145,23 @@ public class YoutubeDL {
         }
 
         return videoInfo;
+    }
+
+    public PlaylistInfo getPlaylistInfo(String url) throws YoutubeDLException, InterruptedException {
+        YoutubeDLRequest request = new YoutubeDLRequest(url);
+        request.setOption("--dump-single-json");
+        request.setOption("--flat-playlist");
+        YoutubeDLResponse response = execute(request, null);
+
+        PlaylistInfo playlistInfo;
+
+        try {
+            playlistInfo = objectMapper.readValue(response.getOut(), PlaylistInfo.class);
+        } catch (IOException e) {
+            throw new YoutubeDLException("Unable to parse video information", e);
+        }
+
+        return playlistInfo;
     }
 
     public YoutubeDLResponse execute(YoutubeDLRequest request) throws YoutubeDLException, InterruptedException {

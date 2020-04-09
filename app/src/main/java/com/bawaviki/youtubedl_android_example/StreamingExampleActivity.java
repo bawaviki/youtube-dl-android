@@ -14,16 +14,23 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bawaviki.youtubedl_android.mapper.PlaylistEntries;
+import com.bawaviki.youtubedl_android.mapper.PlaylistInfo;
 import com.devbrackets.android.exomedia.listener.OnPreparedListener;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.orhanobut.logger.Logger;
@@ -61,6 +68,14 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
     NotificationCompat.Builder notifi;
     NotificationManager notificationManager;
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
+    LinearLayout llBottomSheet;
+
+    // init the bottom sheet behavior
+    BottomSheetBehavior bottomSheetBehavior;
+    ListView listView;
+    ArrayAdapter adapter;
+    ArrayList<PlaylistEntries> plalist=new ArrayList <>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,11 +90,15 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
         }
         createNotfiChannel();
         initViews();
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         initListeners();
 
     }
 
     private void initViews() {
+        llBottomSheet = findViewById(R.id.bottom_sheet);
+        bottomSheetBehavior = BottomSheetBehavior.from(llBottomSheet);
+        listView=findViewById(R.id.playListItem);
         btnStartStream = findViewById(R.id.btn_start_streaming);
         btnmp3=findViewById(R.id.mp3button);
         btn144=findViewById(R.id.button144);
@@ -112,11 +131,10 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
         btn720.setOnClickListener(this);
         btn1080.setOnClickListener(this);
         btnD.setOnClickListener(this);
-        videoView.setOnPreparedListener(new OnPreparedListener() {
-            @Override
-            public void onPrepared() {
-                videoView.start();
-            }
+        videoView.setOnPreparedListener(() -> videoView.start());
+        listView.setOnItemClickListener((adapterView, view, i, l) -> {
+            startStream("https://www.youtube.com/watch?v="+plalist.get(i).id);
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         });
     }
 
@@ -124,7 +142,11 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_start_streaming: {
-                startStream();
+                if(etUrl.getText().toString().contains("/playlist?list=")) {
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                    playlistInfo();
+                }else
+                    startStream(etUrl.getText().toString());
                 break;
             }
             case R.id.mp3button:{
@@ -168,8 +190,7 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
         super.onDestroy();
     }
 
-    private void startStream() {
-        String url = etUrl.getText().toString();
+    private void startStream(String url) {
         if (StringUtils.isBlank(url)) {
             etUrl.setError(getString(R.string.url_error));
             return;
@@ -189,6 +210,27 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
                         setupVideoView(videoUrl);
                     }
                 }, e -> {
+                    tvStreamStatus.setText("Failed to fetch Stream Info");
+                    Toast.makeText(StreamingExampleActivity.this, "streaming failed. failed to get stream info", Toast.LENGTH_LONG).show();
+                    Logger.e(e, "failed to get stream info");
+                });
+        compositeDisposable.add(disposable);
+    }
+
+    private void playlistInfo() {
+        String url = etUrl.getText().toString();
+        if (StringUtils.isBlank(url)) {
+            etUrl.setError(getString(R.string.url_error));
+            return;
+        }
+
+        tvStreamStatus.setText("Fetching Playlist Info");
+        Disposable disposable = Observable.fromCallable(() -> YoutubeDL.getInstance().getPlaylistInfo(url))
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(streamInfo -> {
+                    getVideoIdfromPlaylist(streamInfo);
+                    }, e -> {
                     tvStreamStatus.setText("Failed to fetch Stream Info");
                     Toast.makeText(StreamingExampleActivity.this, "streaming failed. failed to get stream info", Toast.LENGTH_LONG).show();
                     Logger.e(e, "failed to get stream info");
@@ -218,6 +260,17 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
 
     private void setupVideoView(String videoUrl) {
         videoView.setVideoURI(Uri.parse(videoUrl));
+    }
+
+    private void getVideoIdfromPlaylist(PlaylistInfo playlistInfo){
+        plalist=playlistInfo.entries;
+        for (PlaylistEntries playlistEntries : playlistInfo.entries){
+            Log.e("videoId(s)",playlistEntries.id);
+            }
+        adapter = new ArrayAdapter<PlaylistEntries>(this,
+                android.R.layout.simple_list_item_1,plalist);
+        listView.setAdapter(adapter);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
     }
 
     private String getVideoUrl(VideoInfo streamInfo) {
@@ -316,6 +369,7 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
 
     private void getVideoFIds(){
        new Fids().execute();
+
     }
 
     public boolean isStoragePermissionGranted() {
