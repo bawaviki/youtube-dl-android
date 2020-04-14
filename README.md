@@ -72,6 +72,12 @@ VideoInfo streamInfo = YoutubeDL.getInstance().getInfo("https://vimeo.com/224392
 System.out.println(streamInfo.getTitle());
 ```
 
+* Get Playlist info (equivalent to `--dump-single-json` of youtube-dl)
+```java
+PlaylistInfo playlistInfo = YoutubeDL.getInstance().getPlaylistInfo("https://www.youtube.com/playlist?list=PLpuxPG4TUOR4N78vlcDHu46hM1LDrz8Lw");
+System.out.println(playlistInfo.Id());
+```
+
 * youtube-dl supports myriad different options which be seen [here](https://github.com/rg3/youtube-dl)
 
 * youtube-dl binary can be updated from within the library
