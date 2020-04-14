@@ -12,4 +12,11 @@
     <string name="download_start">Starting Download</string>
     <string name="download_complete">Download Complete</string>
     <string name="download_failed">Download Failed</string>
+    <string name="generating_playlist">Generating Playlist</string>
+    <string name="_1080p">1080p</string>
+    <string name="_720p">720p</string>
+    <string name="_360p">360p</string>
+    <string name="_240p">240p</string>
+    <string name="_144p">144p</string>
+    <string name="mp3">mp3</string>
 </resources>

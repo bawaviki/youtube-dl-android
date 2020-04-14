@@ -14,17 +14,23 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.devbrackets.android.exomedia.listener.OnPreparedListener;
+import com.bawaviki.youtubedl_android.mapper.PlaylistEntries;
+import com.bawaviki.youtubedl_android.mapper.PlaylistInfo;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.orhanobut.logger.Logger;
 import com.bawaviki.ffmpeg.FFmpeg;
@@ -56,11 +62,20 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
     private List<String> fids;
     private static String CHANNEL_ID="myid";
     private boolean downloading = false;
-    private String title="savetube",author="bawaviki";
+    private String title="savetube";
+    private ProgressBar playlist_progress;
     ProgressDialog progressDialog;
     NotificationCompat.Builder notifi;
     NotificationManager notificationManager;
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
+    LinearLayout llBottomSheet;
+
+    // init the bottom sheet behavior
+    BottomSheetBehavior bottomSheetBehavior;
+    ListView listView;
+    ArrayAdapter adapter;
+    ArrayList<PlaylistEntries> plalist=new ArrayList <>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,11 +90,15 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
         }
         createNotfiChannel();
         initViews();
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         initListeners();
 
     }
 
     private void initViews() {
+        llBottomSheet = findViewById(R.id.bottom_sheet);
+        bottomSheetBehavior = BottomSheetBehavior.from(llBottomSheet);
+        listView=findViewById(R.id.playListItem);
         btnStartStream = findViewById(R.id.btn_start_streaming);
         btnmp3=findViewById(R.id.mp3button);
         btn144=findViewById(R.id.button144);
@@ -100,7 +119,8 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
                 .setSmallIcon(R.drawable.exomedia_ic_play_arrow_white)
                 .setContentTitle("Download file")
                 .setOngoing(true);
-        notificationManager=(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);;
+        notificationManager=(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        playlist_progress=findViewById(R.id.playlist_progress);
     }
 
     private void initListeners() {
@@ -112,11 +132,10 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
         btn720.setOnClickListener(this);
         btn1080.setOnClickListener(this);
         btnD.setOnClickListener(this);
-        videoView.setOnPreparedListener(new OnPreparedListener() {
-            @Override
-            public void onPrepared() {
-                videoView.start();
-            }
+        videoView.setOnPreparedListener(() -> videoView.start());
+        listView.setOnItemClickListener((adapterView, view, i, l) -> {
+            startStream("https://www.youtube.com/watch?v="+plalist.get(i).id);
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         });
     }
 
@@ -124,7 +143,12 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_start_streaming: {
-                startStream();
+                if(etUrl.getText().toString().contains("/playlist?list=")) {
+                    bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                    playlist_progress.setVisibility(View.VISIBLE);
+                    playlistInfo();
+                }else
+                    startStream(etUrl.getText().toString());
                 break;
             }
             case R.id.mp3button:{
@@ -168,8 +192,8 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
         super.onDestroy();
     }
 
-    private void startStream() {
-        String url = etUrl.getText().toString();
+    @SuppressLint("SetTextI18n")
+    private void startStream(String url) {
         if (StringUtils.isBlank(url)) {
             etUrl.setError(getString(R.string.url_error));
             return;
@@ -196,6 +220,26 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
         compositeDisposable.add(disposable);
     }
 
+    @SuppressLint("SetTextI18n")
+    private void playlistInfo() {
+        String url = etUrl.getText().toString();
+        if (StringUtils.isBlank(url)) {
+            etUrl.setError(getString(R.string.url_error));
+            return;
+        }
+
+        tvStreamStatus.setText("Fetching Playlist Info");
+        Disposable disposable = Observable.fromCallable(() -> YoutubeDL.getInstance().getPlaylistInfo(url))
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::getVideoIdfromPlaylist, e -> {
+                    tvStreamStatus.setText("Failed to fetch Stream Info");
+                    Toast.makeText(StreamingExampleActivity.this, "streaming failed. failed to get stream info", Toast.LENGTH_LONG).show();
+                    Logger.e(e, "failed to get stream info");
+                });
+        compositeDisposable.add(disposable);
+    }
+
     private void downloadVideo() {
         String url = etUrl.getText().toString();
         if (StringUtils.isBlank(url)) {
@@ -206,10 +250,7 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
         Disposable disposable = Observable.fromCallable(() -> YoutubeDL.getInstance().getInfo(url))
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(streamInfo -> {
-                    downloadManager(getVideoUrl(streamInfo));
-
-                }, e -> {
+                .subscribe(streamInfo -> downloadManager(getVideoUrl(streamInfo)), e -> {
                     Toast.makeText(StreamingExampleActivity.this, "Downloading failed. failed to get stream info", Toast.LENGTH_LONG).show();
                     Logger.e(e, "failed to get stream info");
                 });
@@ -220,6 +261,15 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
         videoView.setVideoURI(Uri.parse(videoUrl));
     }
 
+    private void getVideoIdfromPlaylist(PlaylistInfo playlistInfo){
+        plalist=playlistInfo.entries;
+        playlist_progress.setVisibility(View.GONE);
+        adapter = new ArrayAdapter <>(this,
+                android.R.layout.simple_list_item_1, plalist);
+        listView.setAdapter(adapter);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+    }
+
     private String getVideoUrl(VideoInfo streamInfo) {
         String videoUrl = null;
         if(null == streamInfo || null == streamInfo.formats){
@@ -227,9 +277,10 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
             return null;
         }
         title=streamInfo.title+"."+streamInfo.ext;
-        author=streamInfo.uploader;
+        //To get uploader name use
+        // String author = streamInfo.uploader;
         for(VideoFormat f: streamInfo.formats){
-            if( etUrl.getText().toString().contains("https://youtube.com")|| etUrl.getText().toString().contains("https://youtu.be")) {
+            if( etUrl.getText().toString().contains("youtube.com")|| etUrl.getText().toString().contains("https://youtu.be")) {
                 Log.e("url", ":" + f.formatId);
                 if ("18".equals(f.formatId)) {
                     videoUrl = f.url;
@@ -253,9 +304,7 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
                 notificationManager.notify(0,notifi.build());
 
             notifi.setProgress(100, (int) progress,false);
-            runOnUiThread(() -> {
-                Toast.makeText(StreamingExampleActivity.this, String.valueOf(progress) + "% (ETA " + String.valueOf(etaInSeconds) + " seconds)", Toast.LENGTH_SHORT).show();
-                }
+            runOnUiThread(() -> Toast.makeText(StreamingExampleActivity.this, progress + "% (ETA " + etaInSeconds + " seconds)", Toast.LENGTH_SHORT).show()
                 );
 
         }
@@ -309,13 +358,16 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
     private File getDownloadLocation() {
         File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         File youtubeDLDir = new File(downloadsDir, "youtubedl-android");
-        if (!youtubeDLDir.exists()) youtubeDLDir.mkdir();
+        if (!youtubeDLDir.exists())
+            if(youtubeDLDir.mkdir())
+                Log.e("Directory", "exist");
         return youtubeDLDir;
     }
 
 
     private void getVideoFIds(){
-       new Fids().execute();
+       new FidsExtractor().execute(etUrl.getText().toString());
+
     }
 
     public boolean isStoragePermissionGranted() {
@@ -354,21 +406,15 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
         }
     }
 
-    public  class Fids extends AsyncTask{
+    @SuppressLint("StaticFieldLeak")
+    public  class FidsExtractor extends AsyncTask<String,Void,List<String>>{
 
         @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            progressDialog.show();
-        }
-
-        @SuppressLint("WrongThread")
-        @Override
-        protected Object doInBackground(Object[] objects) {
+        protected List <String> doInBackground(String... strings) {
             try {
-               for(VideoFormat f: YoutubeDL.getInstance().getInfo(etUrl.getText().toString()).formats){
-                   fids.add(f.formatId);
-               }
+                for(VideoFormat f: YoutubeDL.getInstance().getInfo(strings[0]).formats){
+                    fids.add(f.formatId);
+                }
             } catch (YoutubeDLException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
@@ -378,9 +424,15 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
         }
 
         @Override
-        protected void onPostExecute(Object o) {
-            super.onPostExecute(o);
-            if(fids.contains("140")){
+        protected void onPreExecute() {
+            super.onPreExecute();
+            progressDialog.show();
+        }
+
+        @Override
+        protected void onPostExecute(List <String> fids) {
+            super.onPostExecute(fids);
+          if(fids.contains("140")){
                 btnmp3.setVisibility(View.VISIBLE);
             }else
                 btnmp3.setVisibility(View.INVISIBLE);
