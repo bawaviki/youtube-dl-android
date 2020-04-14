@@ -3,7 +3,9 @@ Android library wrapper for [youtube-dl](https://github.com/rg3/youtube-dl) exec
 Based on [yausername's youtubedl-android](https://github.com/yausername/youtubedl-android) but with ability to download binary files at 
 runtime to decrease apk size.
 
-[![](https://jitpack.io/v/bawaviki/youtube-dl-android.svg)](https://jitpack.io/#bawaviki/youtube-dl-android)
+[![](https://jitpack.io/v/bawaviki/youtube-dl-android.svg)](https://jitpack.io/#bawaviki/youtube-dl-android)        [![GitHub license](https://img.shields.io/github/license/bawaviki/youtube-dl-android?style=plastic)](https://github.com/bawaviki/youtube-dl-android/blob/ondemand/LICENSE)      [![Twitter](https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Fgithub.com%2Fbawaviki%2Fyoutube-dl-android)](https://twitter.com/intent/tweet?text=Wow:&url=https%3A%2F%2Fgithub.com%2Fbawaviki%2Fyoutube-dl-android)
+
+[![GitHub stars](https://img.shields.io/github/stars/bawaviki/youtube-dl-android)](https://github.com/bawaviki/youtube-dl-android/stargazers)       [![GitHub forks](https://img.shields.io/github/forks/bawaviki/youtube-dl-android)](https://github.com/bawaviki/youtube-dl-android/network)
 
 
 ## Credits
