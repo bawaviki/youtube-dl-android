@@ -2,9 +2,9 @@ name: Android CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ ondemand ]
   pull_request:
-    branches: [ master ]
+    branches: [ ondemand ]
 
 jobs:
   build:
