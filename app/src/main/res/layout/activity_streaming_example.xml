@@ -13,26 +13,27 @@
 
         <com.devbrackets.android.exomedia.ui.widget.VideoView
             android:id="@+id/video_view"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="220dp"
             android:paddingTop="10dp"
             app:layout_constraintBottom_toTopOf="@+id/et_url"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.0"
-            app:useDefaultControls="true"
-            tools:layout_editor_absoluteX="0dp" />
+            app:useDefaultControls="true" />
 
         <TextView
-        android:id="@+id/tv_status"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/start"
-        android:textSize="30sp"
-        app:layout_constraintBottom_toTopOf="@+id/et_url"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/video_view"
-        tools:visibility="visible" />
+            android:id="@+id/tv_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/start"
+            android:textSize="30sp"
+            app:layout_constraintBottom_toTopOf="@+id/et_url"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/video_view"
+            tools:visibility="visible" />
 
     <Button
         android:id="@+id/btn_start_streaming"
