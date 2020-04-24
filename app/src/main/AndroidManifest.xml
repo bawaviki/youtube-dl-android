@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.bawaviki.youtubedl_android_example">
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -12,7 +13,9 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        tools:ignore="GoogleAppIndexingWarning"
+        android:fullBackupContent="true">
         <activity android:name="com.bawaviki.youtubedl_android_example.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,10 +25,12 @@
         </activity>
         <activity
             android:name="com.bawaviki.youtubedl_android_example.StreamingExampleActivity"
+            android:windowSoftInputMode="adjustPan"
+            android:configChanges="orientation|keyboard|smallestScreenSize|screenSize|screenLayout"
             android:screenOrientation="portrait" />
         <activity
             android:name="com.bawaviki.youtubedl_android_example.DownloadingExampleActivity"
-            android:screenOrientation="portrait"></activity>
+            android:screenOrientation="portrait"/>
     </application>
 
 </manifest>
