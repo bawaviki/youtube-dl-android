@@ -1,4 +1,4 @@
-# youtube-dl-android
+# youtube-dl-android  ![Android CI](https://github.com/bawaviki/youtube-dl-android/workflows/Android%20CI/badge.svg)
 Android library wrapper for [youtube-dl](https://github.com/rg3/youtube-dl) executable.
 Based on [yausername's youtubedl-android](https://github.com/yausername/youtubedl-android) but with ability to download binary files at 
 runtime to decrease apk size.
