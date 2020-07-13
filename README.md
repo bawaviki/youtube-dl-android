@@ -55,7 +55,7 @@ try {
 ```
 
 
-* Downloading / custom command (A detailed example can be found in the [sample app](app/src/main/java/com/yausername/youtubedl_android_example/DownloadingExampleActivity.java))
+* Downloading / custom command (A detailed example can be found in the [sample app](app/src/main/java/com/bawaviki/youtubedl_android_example/DownloadingExampleActivity.java))
 ```java
 File youtubeDLDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "youtubedl-android");
 YoutubeDLRequest request = new YoutubeDLRequest("https://vimeo.com/22439234");
