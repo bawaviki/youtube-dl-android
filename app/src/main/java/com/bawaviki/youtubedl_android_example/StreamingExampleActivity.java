@@ -301,7 +301,10 @@ public class StreamingExampleActivity extends AppCompatActivity implements View.
 
     private DownloadProgressCallback callback = new DownloadProgressCallback() {
         @Override
-        public void onProgressUpdate(float progress, long etaInSeconds) {
+        public void onProgressUpdate(float progress, long size, long rate, long etaInSeconds) {
+
+            Log.e("size",""+size);
+            Log.e("rate",""+rate);
 
                 notificationManager.notify(0,notifi.build());
 

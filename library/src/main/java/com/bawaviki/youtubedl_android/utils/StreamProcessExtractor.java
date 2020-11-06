@@ -12,13 +12,17 @@ import java.util.regex.Pattern;
 
 public class StreamProcessExtractor extends Thread {
     private static final int GROUP_PERCENT = 1;
-    private static final int GROUP_MINUTES = 2;
-    private static final int GROUP_SECONDS = 3;
+    private static final int GROUP_SIZE = 2;
+    private static final int GROUP_RATE = 3;
+    private static final int GROUP_MINUTES = 4;
+    private static final int GROUP_SECONDS = 5;
+    private final static long KIB_FACTOR = 1024;
+    private final static long MIB_FACTOR = 1024 * KIB_FACTOR;
     private InputStream stream;
     private StringBuffer buffer;
     private final DownloadProgressCallback callback;
 
-    private Pattern p = Pattern.compile("\\[download\\]\\s+(\\d+\\.\\d)% .* ETA (\\d+):(\\d+)");
+    private Pattern p = Pattern.compile("\\[download\\]\\s+(\\d+\\.\\d)% of (.*) at (.*) ETA (\\d+):(\\d+)");
 
     public StreamProcessExtractor(StringBuffer buffer, InputStream stream, DownloadProgressCallback callback) {
         this.stream = stream;
@@ -51,11 +55,42 @@ public class StreamProcessExtractor extends Thread {
         if (m.matches()) {
             float progress = Float.parseFloat(m.group(GROUP_PERCENT));
             long eta = convertToSeconds(m.group(GROUP_MINUTES), m.group(GROUP_SECONDS));
-            callback.onProgressUpdate(progress, eta);
+            long size = convertToBits(m.group(GROUP_SIZE));
+            long rate = convertToBits(m.group(GROUP_RATE));
+            callback.onProgressUpdate(progress, size, rate, eta);
         }
     }
 
     private int convertToSeconds(String minutes, String seconds) {
         return Integer.parseInt(minutes) * 60 + Integer.parseInt(seconds);
+    }
+
+    private long convertToBits(String size){
+
+        float inp = 0;
+
+        if(size.contains("KiB")){
+
+            if(size.charAt(size.length()-1)=='s'){
+                inp = Float.parseFloat(size.substring(0,size.length()-5));
+                return KIB_FACTOR*Math.round(inp);
+            }else {
+                inp = Float.parseFloat(size.substring(0,size.length()-4));
+                return KIB_FACTOR*Math.round(inp);
+            }
+
+        }else if(size.contains("MiB")) {
+
+            if(size.charAt(size.length()-1)=='s'){
+                inp = Float.parseFloat(size.substring(0,size.length()-5));
+                return MIB_FACTOR*Math.round(inp);
+            }else {
+                inp = Float.parseFloat(size.substring(0,size.length()-4));
+                return MIB_FACTOR*Math.round(inp);
+            }
+        }
+
+        return 0L;
+
     }
 }

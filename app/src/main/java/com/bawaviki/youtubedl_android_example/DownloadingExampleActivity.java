@@ -12,6 +12,8 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.text.format.Formatter;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -19,6 +21,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bawaviki.ffmpeg.FFmpeg;
+import com.bawaviki.youtubedl_android.YoutubeDLException;
 import com.orhanobut.logger.Logger;
 import com.bawaviki.youtubedl_android.DownloadProgressCallback;
 import com.bawaviki.youtubedl_android.YoutubeDL;
@@ -51,13 +55,13 @@ public class DownloadingExampleActivity extends AppCompatActivity implements Vie
     private DownloadProgressCallback callback = new DownloadProgressCallback() {
 
         @Override
-        public void onProgressUpdate(float progress, long etaInSeconds) {
+        public void onProgressUpdate(float progress, long size, long rate, long etaInSeconds) {
             notificationManager.notify(0,notifi.build());
 
             notifi.setProgress(100, (int) progress,false);
             runOnUiThread(() -> {
                         progressBar.setProgress((int) progress);
-                        tvDownloadStatus.setText(String.valueOf(progress) + "% (ETA " + String.valueOf(etaInSeconds) + " seconds)");
+                        tvDownloadStatus.setText(String.valueOf(progress)+"% of size "+ Formatter.formatShortFileSize(DownloadingExampleActivity.this,size)+" at "+Formatter.formatShortFileSize(DownloadingExampleActivity.this,rate) + "/s (ETA " + String.valueOf(etaInSeconds) + " seconds)");
                     }
             );
         }
@@ -68,6 +72,12 @@ public class DownloadingExampleActivity extends AppCompatActivity implements Vie
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_downloading_example);
 
+        try {
+            //YoutubeDL.getInstance().init(getApplication(),StreamingExampleActivity.this);
+            FFmpeg.getInstance().init(getApplication(),DownloadingExampleActivity.this);
+        } catch (YoutubeDLException e) {
+            Log.e("ffmpeg", "failed to initialize youtubedl-android", e);
+        }
         initViews();
         initListeners();
         createNotfiChannel();
