@@ -1,5 +1,7 @@
 package com.bawaviki.youtubedl_android.utils;
 
+import android.util.Log;
+
 import com.orhanobut.logger.Logger;
 import com.bawaviki.youtubedl_android.DownloadProgressCallback;
 
@@ -66,6 +68,9 @@ public class StreamProcessExtractor extends Thread {
     }
 
     private long convertToBits(String size){
+
+        if(!Character.isDigit(size.charAt(0)))
+            size=size.substring(1);
 
         float inp = 0;
 
