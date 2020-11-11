@@ -41,7 +41,7 @@ import io.reactivex.schedulers.Schedulers;
 
 public class DownloadingExampleActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private Button btnStartDownload;
+    private Button btnStartDownload,btnStopDownload;
     private EditText etUrl;
     private ProgressBar progressBar;
     private TextView tvDownloadStatus;
@@ -85,6 +85,7 @@ public class DownloadingExampleActivity extends AppCompatActivity implements Vie
 
     private void initViews() {
         btnStartDownload = findViewById(R.id.btn_start_download);
+        btnStopDownload = findViewById(R.id.btn_stop_download);
         etUrl = findViewById(R.id.et_url);
         progressBar = findViewById(R.id.progress_bar);
         tvDownloadStatus = findViewById(R.id.tv_status);
@@ -99,6 +100,7 @@ public class DownloadingExampleActivity extends AppCompatActivity implements Vie
 
     private void initListeners() {
         btnStartDownload.setOnClickListener(this);
+        btnStopDownload.setOnClickListener(this);
     }
 
     @Override
@@ -107,6 +109,9 @@ public class DownloadingExampleActivity extends AppCompatActivity implements Vie
             case R.id.btn_start_download: {
                 startDownload();
                 break;
+            }
+            case R.id.btn_stop_download: {
+                YoutubeDL.getInstance().stop();
             }
         }
     }

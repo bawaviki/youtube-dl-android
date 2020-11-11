@@ -61,6 +61,8 @@ public class YoutubeDL {
 
     protected static final ObjectMapper objectMapper = new ObjectMapper();
 
+    private Process process;
+
     private YoutubeDL(){
     }
 
@@ -172,7 +174,7 @@ public class YoutubeDL {
         assertInit();
 
         YoutubeDLResponse youtubeDLResponse;
-        Process process;
+//        Process process;
         int exitCode;
         StringBuffer outBuffer = new StringBuffer(); //stdout
         StringBuffer errBuffer = new StringBuffer(); //stderr
@@ -222,6 +224,10 @@ public class YoutubeDL {
         youtubeDLResponse = new YoutubeDLResponse(command, exitCode, elapsedTime, out, err);
 
         return youtubeDLResponse;
+    }
+
+    public void stop(){
+        process.destroy();
     }
 
     synchronized public YoutubeDLUpdater.UpdateStatus updateYoutubeDL(Application application) throws YoutubeDLException {

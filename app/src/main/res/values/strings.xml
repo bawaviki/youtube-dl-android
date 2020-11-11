@@ -6,6 +6,7 @@
     <string name="btn_update">Update Youtube-DL</string>
     <string name="btn_start_stream">Start Stream</string>
     <string name="btn_start_download">Start Download</string>
+    <string name="btn_stop_download">Stop Download</string>
     <string name="url_hint">enter url here</string>
     <string name="url_error">enter a valid url</string>
     <string name="start">Do the thing</string>
